@@ -113,48 +113,59 @@ insn(Bytes) ->
             {TIOCMBIS, CM17A_SIGNAL_STANDBY, 350}
         ]).
 
--spec command(iodata(),cm17a_code(),cm17a_device(),cm17a_cmd()) -> 'ok'.
+-spec command(iodata(),cm17a_code(), cm17a_device(),cm17a_cmd()) ->
+    ok | {error,file:posix()}.
 command(Serial, Code, Dev, Cmd) ->
     {ok,FD} = serctl:open(Serial),
-
     Bytes = encode(Code, Dev, Cmd),
     Insn = insn(Bytes),
+    Result = send(FD, Insn),
+    serctl:close(FD),
+    Result.
 
-    send(FD, Insn),
-
-    serctl:close(FD).
-
--spec send(fd(),[cm17a_insn()]) -> 'ok'.
+-spec send(fd(),[cm17a_insn()]) -> 'ok' | {'error',file:posix()}.
 send(FD, Insn) ->
     process(FD, Insn, fun init/1, fun run/2, fun reset/2).
 
--spec init(fd()) -> non_neg_integer().
+-spec init(fd()) -> {'ok',non_neg_integer()} | {'error',file:posix()}.
 init(FD) ->
-    {ok, Status0} = serctl:ioctl(FD, ?TIOCMGET, <<0:32>>),
-    Status1 = binary:decode_unsigned(Status0, erlang:system_info(endian))
-        band (?TIOCM_DTR bor ?TIOCM_RTS),
-    Status1 bxor (?TIOCM_DTR bor ?TIOCM_RTS).
+    case serctl:ioctl(FD, ?TIOCMGET, <<0:32>>) of
+        {ok, Status0} ->
+            Status1 = binary:decode_unsigned(Status0, erlang:system_info(endian))
+                band (?TIOCM_DTR bor ?TIOCM_RTS),
+            {ok, Status1 bxor (?TIOCM_DTR bor ?TIOCM_RTS)};
+        Error ->
+            Error
+    end.
 
--spec run(fd(),[cm17a_insn()]) -> 'ok'.
-run(FD, Insn) ->
-    [ begin
-        case serctl:ioctl(FD, Request, <<?UINT32(Arg)>>) of
-            {ok,_} -> timer:sleep(Delay);
-            Error -> error(Error, [Request, Arg, Delay])
-        end
-      end || {Request, Arg, Delay} <- Insn ],
-  ok.
+-spec run(fd(),[cm17a_insn()]) -> 'ok' | {'error',file:posix()}.
+run(_FD, []) ->
+    ok;
+run(FD, [{Request, Arg, Delay}|Insn]) ->
+    case serctl:ioctl(FD, Request, <<?UINT32(Arg)>>) of
+        {ok,_} -> timer:sleep(Delay);
+        Error -> Error
+    end,
+    run(FD, Insn).
 
--spec reset(fd(),non_neg_integer()) -> 'ok'.
+-spec reset(fd(),non_neg_integer()) -> 'ok' | {'error',file:posix()}.
 reset(FD, Status) ->
-    {ok,_} = serctl:ioctl(FD, ?TIOCMBIC, <<?UINT32(Status)>>),
-    ok.
+    case serctl:ioctl(FD, ?TIOCMBIC, <<?UINT32(Status)>>) of
+        {ok,_} -> ok;
+        Error -> Error
+    end.
 
 -spec process(FD :: fd(), Insn :: [cm17a_insn()],
-    Init :: fun((any()) -> non_neg_integer()),
-    Run :: fun((any(), [cm17a_insn()]) -> ok),
-    Reset :: fun((any(),non_neg_integer()) -> ok)) -> ok.
+    Init :: fun((any()) -> {ok,non_neg_integer()} | {error,file:posix()}),
+    Run :: fun((any(), [cm17a_insn()]) -> ok | {error,file:posix()}),
+    Reset :: fun((any(),non_neg_integer()) -> ok | {error,file:posix()})) -> ok.
 process(FD, Insn, Init, Run, Reset) ->
-    State = Init(FD),
-    Run(FD, Insn),
-    Reset(FD, State).
+    case Init(FD) of
+        {ok,State} ->
+            case Run(FD, Insn) of
+                ok -> Reset(FD, State);
+                Error -> Error
+            end;
+        Error ->
+            Error
+    end.

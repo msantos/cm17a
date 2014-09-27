@@ -49,7 +49,7 @@ ok = cm17a:send(FD, Off).
     cm17a_insn = {Ioctl :: non_neg_integer(), Arg :: non_neg_integer(),
         Delay :: Timer:timeout()}
 
-        A instruction for the serial port.
+        An instruction for the serial port.
 
 # EXPORTS
 
@@ -75,13 +75,12 @@ ok = cm17a:send(FD, Off).
         Types   Insn = [cm17a_insn()]
 
         Generates a representation of the state of the serial port for
-        each bit in the encoded command that can be used for controlling
-        the serial port.
+        each bit in the encoded command.
 
         insn/1 calls into an NIF to retrieve constants for serctl:ioctl/3
         so the result is not portable.
 
-    send(FD, Insn) -> ok
+    send(FD, Insn) -> ok | {error,posix()}
 
         Types   FD = fd()        
                 Insn = [cmd17a_insn()]

@@ -1,7 +1,7 @@
 {application, cm17a,
     [
     {description, "X10 CMA17a (firecracker) interface"},
-    {vsn, "0.1.0"},
+    {vsn, "0.1.1"},
     {modules, [
         cma17a,
         serctl

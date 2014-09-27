@@ -95,16 +95,22 @@ encode(Code, Dev, Cmd) ->
 
 -spec insn(binary()) -> [cm17a_insn()].
 insn(Bytes) ->
+    TIOCMBIC = ?TIOCMBIC,
+    TIOCMBIS = ?TIOCMBIS,
+    CM17A_SIGNAL_SET_1 = ?CM17A_SIGNAL_SET_1,
+    CM17A_SIGNAL_SET_0 = ?CM17A_SIGNAL_SET_0,
+    CM17A_SIGNAL_STANDBY = ?CM17A_SIGNAL_STANDBY,
+
     Insn = [ case N of
-        0 -> [{?TIOCMBIC, ?CM17A_SIGNAL_SET_1, 1},
-                {?TIOCMBIS, ?CM17A_SIGNAL_STANDBY, 0}];
-        1 -> [{?TIOCMBIC, ?CM17A_SIGNAL_SET_0, 1},
-                {?TIOCMBIS, ?CM17A_SIGNAL_STANDBY, 0}]
+        0 -> [{TIOCMBIC, CM17A_SIGNAL_SET_1, 1},
+                {TIOCMBIS, CM17A_SIGNAL_STANDBY, 0}];
+        1 -> [{TIOCMBIC, CM17A_SIGNAL_SET_0, 1},
+                {TIOCMBIS, CM17A_SIGNAL_STANDBY, 0}]
     end || <<N:1>> <= Bytes ],
     lists:flatten([
-            {?TIOCMBIS, ?CM17A_SIGNAL_STANDBY, 350},
+            {TIOCMBIS, CM17A_SIGNAL_STANDBY, 350},
             Insn,
-            {?TIOCMBIS, ?CM17A_SIGNAL_STANDBY, 350}
+            {TIOCMBIS, CM17A_SIGNAL_STANDBY, 350}
         ]).
 
 -spec command(iodata(),cm17a_code(),cm17a_device(),cm17a_cmd()) -> 'ok'.

@@ -1,0 +1,8 @@
+.eunit
+c_src/*.o
+ebin
+priv
+c_src/msantos_crypt.h
+config.log
+config.status
+autom4te.cache

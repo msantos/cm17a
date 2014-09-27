@@ -1,7 +1,7 @@
 REBAR=$(shell which rebar || echo ./rebar)
 DEPSOLVER_PLT=$(CURDIR)/.depsolver_plt
 
-all: compile
+all: deps compile
 
 ./rebar:
 	erl -noshell -s inets start -s ssl start \
@@ -14,6 +14,9 @@ compile: $(REBAR)
 
 clean: $(REBAR)
 	@$(REBAR) clean
+
+deps: $(REBAR)
+	@$(REBAR) check-deps || $(REBAR) get-deps
 
 test: compile
 	@$(REBAR) eunit recursive=false

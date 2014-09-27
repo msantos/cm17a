@@ -64,6 +64,7 @@
 
 -type fd() :: any().
 
+-type cm17a_data() :: <<_:40>>.
 -type cm17a_cmd() ::
     on | off | bright | dim |
     all_off | all_on | lamps_off | lamps_on | pause.
@@ -85,7 +86,7 @@ cmd(lamps_off) -> 16#84;
 cmd(lamps_on) -> 16#94;
 cmd(pause) -> 16#20.
 
--spec encode(cm17a_code(),cm17a_device(),cm17a_cmd()) -> binary().
+-spec encode(cm17a_code(),cm17a_device(),cm17a_cmd()) -> cm17a_data().
 encode(Code, Dev, Cmd) ->
     <<16#d5, 16#aa,
         ((element(Code-$A+1, ?CM17A_HOUSECODE) bsl 4)
@@ -93,7 +94,7 @@ encode(Code, Dev, Cmd) ->
         (cmd(Cmd) bor (element(2, element(Dev, ?CM17A_DEVICE)))),
         16#ad>>.
 
--spec insn(binary()) -> [cm17a_insn()].
+-spec insn(cm17a_data()) -> [cm17a_insn()].
 insn(Bytes) ->
     TIOCMBIC = ?TIOCMBIC,
     TIOCMBIS = ?TIOCMBIS,

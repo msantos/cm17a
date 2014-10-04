@@ -98,16 +98,19 @@ encode(Code, Dev, Cmd) ->
 insn(Bytes) ->
     TIOCMBIC = ?TIOCMBIC,
     TIOCMBIS = ?TIOCMBIS,
-    CM17A_SIGNAL_SET_1 = ?CM17A_SIGNAL_SET_1,
-    CM17A_SIGNAL_SET_0 = ?CM17A_SIGNAL_SET_0,
     CM17A_SIGNAL_STANDBY = ?CM17A_SIGNAL_STANDBY,
 
-    Insn = [ case N of
-        0 -> [{TIOCMBIC, CM17A_SIGNAL_SET_1, 1},
-                {TIOCMBIS, CM17A_SIGNAL_STANDBY, 0}];
-        1 -> [{TIOCMBIC, CM17A_SIGNAL_SET_0, 1},
-                {TIOCMBIS, CM17A_SIGNAL_STANDBY, 0}]
-    end || <<N:1>> <= Bytes ],
+    % DTR or RTS is set high to power the firecracker:
+    %   * in standby, both DTR and RTS are set
+    %   * to signal bit 0, RTS is cleared
+    %   * to signal bit 1, DTR is cleared
+    %
+    % Since tuples start at offset 1, bit 0 maps to element 1 and
+    % bit 1 maps to element 2.
+    Signal = {?CM17A_SIGNAL_SET_1, ?CM17A_SIGNAL_SET_0},
+
+    Insn = [ [{TIOCMBIC, element(N+1, Signal), 1},
+              {TIOCMBIS, CM17A_SIGNAL_STANDBY, 0}] || <<N:1>> <= Bytes ],
     lists:flatten([
             {TIOCMBIS, CM17A_SIGNAL_STANDBY, 350},
             Insn,

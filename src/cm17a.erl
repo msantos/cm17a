@@ -147,10 +147,11 @@ run(_FD, []) ->
     ok;
 run(FD, [{Request, Arg, Delay}|Insn]) ->
     case serctl:ioctl(FD, Request, <<?UINT32(Arg)>>) of
-        {ok,_} -> timer:sleep(Delay);
+        {ok,_} ->
+            timer:sleep(Delay),
+            run(FD, Insn);
         Error -> Error
-    end,
-    run(FD, Insn).
+    end.
 
 -spec reset(fd(),non_neg_integer()) -> 'ok' | {'error',file:posix()}.
 reset(FD, Status) ->

@@ -102,10 +102,10 @@ insn(Bytes) ->
     TIOCMBIS = ?TIOCMBIS,
     CM17A_SIGNAL_STANDBY = ?CM17A_SIGNAL_STANDBY,
 
-    % DTR or RTS is set high to power the firecracker:
+    % DTR and RTS power the firecracker:
     %   * in standby, both DTR and RTS are set
-    %   * to signal bit 0, RTS is cleared
-    %   * to signal bit 1, DTR is cleared
+    %   * to signal bit 0, RTS (logical 1) is cleared
+    %   * to signal bit 1, DTR (logical 0) is cleared
     %
     % Since tuples start at offset 1, bit 0 maps to element 1 and
     % bit 1 maps to element 2.

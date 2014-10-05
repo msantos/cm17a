@@ -86,12 +86,14 @@ cmd(lamps_off) -> 16#84;
 cmd(lamps_on) -> 16#94;
 cmd(pause) -> 16#20.
 
+-define(DEVICE_LOOKUP(N,X), (element(N, (element(X,?CM17A_DEVICE))))).
+
 -spec encode(cm17a_code(),cm17a_device(),cm17a_cmd()) -> cm17a_data().
 encode(Code, Dev, Cmd) ->
     <<16#d5, 16#aa,
         ((element(Code-$A+1, ?CM17A_HOUSECODE) bsl 4)
-            bor (element(1, element(Dev, ?CM17A_DEVICE)))),
-        (cmd(Cmd) bor (element(2, element(Dev, ?CM17A_DEVICE)))),
+            bor (?DEVICE_LOOKUP(1,Dev))),
+        (cmd(Cmd) bor (?DEVICE_LOOKUP(2,Dev))),
         16#ad>>.
 
 -spec insn(cm17a_data()) -> [cm17a_insn()].

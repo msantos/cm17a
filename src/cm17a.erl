@@ -169,10 +169,9 @@ reset(FD, Status) ->
 process(FD, Insn, Init, Run, Reset) ->
     case Init(FD) of
         {ok,State} ->
-            case Run(FD, Insn) of
-                ok -> Reset(FD, State);
-                Error -> Error
-            end;
+            Reply = Run(FD, Insn),
+            Reset(FD, State),
+            Reply;
         Error ->
             Error
     end.

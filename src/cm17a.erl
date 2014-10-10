@@ -71,7 +71,7 @@
 
 -type cm17a_code() :: 65..80.
 -type cm17a_device() :: 1..16.
--type cm17a_insn() :: {non_neg_integer(), non_neg_integer(), timer:timeout()}.
+-type cm17a_insn() :: {non_neg_integer(), non_neg_integer(), timeout()}.
 
 -export_type([cm17a_code/0, cm17a_cmd/0, cm17a_insn/0]).
 

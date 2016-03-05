@@ -122,12 +122,16 @@ insn(Bytes) ->
 -spec command(iodata(),cm17a_code(), cm17a_device(),cm17a_cmd()) ->
     ok | {error,file:posix()}.
 command(Serial, Code, Dev, Cmd) ->
-    {ok,FD} = serctl:open(Serial),
-    Bytes = encode(Code, Dev, Cmd),
-    Insn = insn(Bytes),
-    Result = send(FD, Insn),
-    serctl:close(FD),
-    Result.
+    case serctl:open(Serial) of
+        {ok,FD} ->
+            Bytes = encode(Code, Dev, Cmd),
+            Insn = insn(Bytes),
+            Result = send(FD, Insn),
+            serctl:close(FD),
+            Result;
+        Error ->
+            Error
+    end.
 
 -spec send(fd(),[cm17a_insn()]) -> 'ok' | {'error',file:posix()}.
 send(FD, Insn) ->

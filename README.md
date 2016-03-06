@@ -3,6 +3,10 @@
 An Erlang interface to the X10 Firecracker (CM17A) home automation
 RF transmitters.
 
+# BUILD
+
+    $ rebar3 compile
+
 # OVERVIEW
 
 * Switch on a device attached to A1 using /dev/ttyUSB0

@@ -1,4 +1,4 @@
-% Copyright (c) 2014, Michael Santos <michael.santos@gmail.com>
+% Copyright (c) 2014-2016, Michael Santos <michael.santos@gmail.com>
 %
 % Permission to use, copy, modify, and/or distribute this software for any
 % purpose with or without fee is hereby granted, provided that the above
@@ -68,6 +68,9 @@
 -type cm17a_cmd() ::
     on | off | bright | dim |
     all_off | all_on | lamps_off | lamps_on | pause.
+-type cm17a_byte() ::
+    16#00 | 16#20 | 16#88 | 16#98 |
+    16#80 | 16#91 | 16#84 | 16#94 | 16#20.
 
 -type cm17a_code() :: 65..80.
 -type cm17a_device() :: 1..16.
@@ -75,7 +78,7 @@
 
 -export_type([cm17a_code/0, cm17a_cmd/0, cm17a_insn/0]).
 
--spec cmd(cm17a_cmd()) -> byte().
+-spec cmd(cm17a_cmd()) -> cm17a_byte().
 cmd(on) -> 16#00;
 cmd(off) -> 16#20;
 cmd(bright) -> 16#88;

@@ -1,13 +1,23 @@
--module(cm17a_tests).
+-module(cm17a_SUITE).
 
--compile(export_all).
+-include_lib("common_test/include/ct.hrl").
 
--include_lib("eunit/include/eunit.hrl").
+-export([
+        all/0
+    ]).
 
-encode_test() ->
-    ?assertEqual(<<213,170,80,40,173>>, cm17a:encode($D, 3, off)).
+-export([
+        encode/1,
+        insn/1
+    ]).
 
-insn_test() ->
+all() ->
+    [encode, insn].
+
+encode(_Config) ->
+    <<213,170,80,40,173>> = cm17a:encode($D, 3, off).
+
+insn(_Config) ->
     Insn = case os:type() of
         {unix,linux} ->
             [{21526,6,350}, {21527,2,1}, {21526,6,0}, {21527,2,1}, {21526,6,0},
@@ -64,4 +74,4 @@ insn_test() ->
              {29724,2,1}, {29723,6,0}, {29724,4,1}, {29723,6,0}, {29724,2,1},
              {29723,6,0}, {29723,6,350}]
     end,
-    ?assertEqual(Insn, cm17a:insn(<<213,170,80,40,173>>)).
+    Insn = cm17a:insn(<<213,170,80,40,173>>).

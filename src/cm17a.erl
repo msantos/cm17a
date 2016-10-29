@@ -89,14 +89,14 @@ cmd(lamps_off) -> 16#84;
 cmd(lamps_on) -> 16#94;
 cmd(pause) -> 16#20.
 
--define(DEVICE_LOOKUP(N,X), (element(N, (element(X,?CM17A_DEVICE))))).
+-define(DEVICE_LOOKUP(N, X), (element(N, (element(X, ?CM17A_DEVICE))))).
 
--spec encode(cm17a_code(),cm17a_device(),cm17a_cmd()) -> cm17a_data().
+-spec encode(cm17a_code(), cm17a_device(), cm17a_cmd()) -> cm17a_data().
 encode(Code, Dev, Cmd) ->
     <<16#d5, 16#aa,
         ((element(Code-$A+1, ?CM17A_HOUSECODE) bsl 4)
-            bor (?DEVICE_LOOKUP(1,Dev))),
-        (cmd(Cmd) bor (?DEVICE_LOOKUP(2,Dev))),
+            bor (?DEVICE_LOOKUP(1, Dev))),
+        (cmd(Cmd) bor (?DEVICE_LOOKUP(2, Dev))),
         16#ad>>.
 
 -spec insn(cm17a_data()) -> [cm17a_insn()].
@@ -122,11 +122,11 @@ insn(Bytes) ->
             {TIOCMBIS, CM17A_SIGNAL_STANDBY, 350}
         ]).
 
--spec command(iodata(),cm17a_code(), cm17a_device(),cm17a_cmd()) ->
-    ok | {error,file:posix()}.
+-spec command(iodata(), cm17a_code(), cm17a_device(), cm17a_cmd()) ->
+    ok | {error, file:posix()}.
 command(Serial, Code, Dev, Cmd) ->
     case serctl:open(Serial) of
-        {ok,FD} ->
+        {ok, FD} ->
             Bytes = encode(Code, Dev, Cmd),
             Insn = insn(Bytes),
             Result = send(FD, Insn),
@@ -136,46 +136,49 @@ command(Serial, Code, Dev, Cmd) ->
             Error
     end.
 
--spec send(fd(),[cm17a_insn()]) -> 'ok' | {'error',file:posix()}.
+-spec send(fd(), [cm17a_insn()]) -> 'ok' | {'error', file:posix()}.
 send(FD, Insn) ->
     process(FD, Insn, fun init/1, fun run/2, fun reset/2).
 
--spec init(fd()) -> {'ok',non_neg_integer()} | {'error',file:posix()}.
+-spec init(fd()) -> {'ok', non_neg_integer()} | {'error', file:posix()}.
 init(FD) ->
     case serctl:ioctl(FD, ?TIOCMGET, <<0:32>>) of
         {ok, Status0} ->
-            Status1 = binary:decode_unsigned(Status0, erlang:system_info(endian))
-                band (?TIOCM_DTR bor ?TIOCM_RTS),
+            Status1 = binary:decode_unsigned(
+                Status0,
+                erlang:system_info(endian)
+            ) band (?TIOCM_DTR bor ?TIOCM_RTS),
             {ok, Status1 bxor (?TIOCM_DTR bor ?TIOCM_RTS)};
         Error ->
             Error
     end.
 
--spec run(fd(),[cm17a_insn()]) -> 'ok' | {'error',file:posix()}.
+-spec run(fd(), [cm17a_insn()]) -> 'ok' | {'error', file:posix()}.
 run(_FD, []) ->
     ok;
 run(FD, [{Request, Arg, Delay}|Insn]) ->
     case serctl:ioctl(FD, Request, <<?UINT32(Arg)>>) of
-        {ok,_} ->
+        {ok, _} ->
             timer:sleep(Delay),
             run(FD, Insn);
         Error -> Error
     end.
 
--spec reset(fd(),non_neg_integer()) -> 'ok' | {'error',file:posix()}.
+-spec reset(fd(), non_neg_integer()) -> 'ok' | {'error', file:posix()}.
 reset(FD, Status) ->
     case serctl:ioctl(FD, ?TIOCMBIC, <<?UINT32(Status)>>) of
-        {ok,_} -> ok;
+        {ok, _} -> ok;
         Error -> Error
     end.
 
 -spec process(FD :: fd(), Insn :: [cm17a_insn()],
-    Init :: fun((any()) -> {ok,non_neg_integer()} | {error,file:posix()}),
-    Run :: fun((any(), [cm17a_insn()]) -> ok | {error,file:posix()}),
-    Reset :: fun((any(),non_neg_integer()) -> ok | {error,file:posix()})) -> ok.
+    Init :: fun((any()) -> {ok, non_neg_integer()} | {error, file:posix()}),
+    Run :: fun((any(), [cm17a_insn()]) -> ok | {error, file:posix()}),
+    Reset :: fun((any(), non_neg_integer()) -> ok | {error, file:posix()}))
+    -> ok.
 process(FD, Insn, Init, Run, Reset) ->
     case Init(FD) of
-        {ok,State} ->
+        {ok, State} ->
             Reply = Run(FD, Insn),
             Reset(FD, State),
             Reply;

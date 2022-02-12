@@ -1,4 +1,4 @@
-% Copyright (c) 2014-2016, Michael Santos <michael.santos@gmail.com>
+% Copyright (c) 2014-2022, Michael Santos <michael.santos@gmail.com>
 %
 % Permission to use, copy, modify, and/or distribute this software for any
 % purpose with or without fee is hereby granted, provided that the above
@@ -14,16 +14,18 @@
 -module(cm17a).
 
 -export([
-        command/4, send/2,
-        encode/3, insn/1
-    ]).
+    command/4,
+    send/2,
+    encode/3,
+    insn/1
+]).
 
 -export([
-        process/5, init/1, run/2, reset/2
-    ]).
+    process/5, init/1, run/2, reset/2
+]).
 
--define(UINT16(N), (N):2/native-unsigned-integer-unit:8).
--define(UINT32(N), (N):4/native-unsigned-integer-unit:8).
+-define(UINT16(N), (N):2 / native - unsigned - integer - unit:8).
+-define(UINT32(N), (N):4 / native - unsigned - integer - unit:8).
 
 -define(TIOCMGET, serctl:constant(tiocmget)).
 -define(TIOCMBIC, serctl:constant(tiocmbic)).
@@ -36,6 +38,7 @@
 -define(CM17A_SIGNAL_SET_0, (?TIOCM_DTR)).
 -define(CM17A_SIGNAL_STANDBY, (?TIOCM_RTS bor ?TIOCM_DTR)).
 
+%% erlfmt-ignore
 -define(CM17A_HOUSECODE, {
         16#06, % A
         16#07, % B
@@ -55,6 +58,7 @@
         16#03  % P
     }).
 
+%% erlfmt-ignore
 -define(CM17A_DEVICE, {
     {16#00, 16#00}, {16#00, 16#10}, {16#00, 16#08}, {16#00, 16#18}, % 1-4
     {16#00, 16#40}, {16#00, 16#50}, {16#00, 16#48}, {16#00, 16#58}, % 5-8
@@ -66,11 +70,25 @@
 
 -type cm17a_data() :: <<_:40>>.
 -type cm17a_cmd() ::
-    on | off | bright | dim |
-    all_off | all_on | lamps_off | lamps_on | pause.
+    on
+    | off
+    | bright
+    | dim
+    | all_off
+    | all_on
+    | lamps_off
+    | lamps_on
+    | pause.
 -type cm17a_byte() ::
-    16#00 | 16#20 | 16#88 | 16#98 |
-    16#80 | 16#91 | 16#84 | 16#94 | 16#20.
+    16#00
+    | 16#20
+    | 16#88
+    | 16#98
+    | 16#80
+    | 16#91
+    | 16#84
+    | 16#94
+    | 16#20.
 
 -type cm17a_code() :: 65..80.
 -type cm17a_device() :: 1..16.
@@ -94,10 +112,9 @@ cmd(pause) -> 16#20.
 -spec encode(cm17a_code(), cm17a_device(), cm17a_cmd()) -> cm17a_data().
 encode(Code, Dev, Cmd) ->
     <<16#d5, 16#aa,
-        ((element(Code-$A+1, ?CM17A_HOUSECODE) bsl 4)
-            bor (?DEVICE_LOOKUP(1, Dev))),
-        (cmd(Cmd) bor (?DEVICE_LOOKUP(2, Dev))),
-        16#ad>>.
+        ((element(Code - $A + 1, ?CM17A_HOUSECODE) bsl 4) bor
+            (?DEVICE_LOOKUP(1, Dev))),
+        (cmd(Cmd) bor (?DEVICE_LOOKUP(2, Dev))), 16#ad>>.
 
 -spec insn(cm17a_data()) -> [cm17a_insn()].
 insn(Bytes) ->
@@ -114,13 +131,18 @@ insn(Bytes) ->
     % bit 1 maps to element 2.
     Signal = {?CM17A_SIGNAL_SET_1, ?CM17A_SIGNAL_SET_0},
 
-    Insn = [ [{TIOCMBIC, element(N+1, Signal), 1},
-              {TIOCMBIS, CM17A_SIGNAL_STANDBY, 0}] || <<N:1>> <= Bytes ],
+    Insn = [
+        [
+            {TIOCMBIC, element(N + 1, Signal), 1},
+            {TIOCMBIS, CM17A_SIGNAL_STANDBY, 0}
+        ]
+     || <<N:1>> <= Bytes
+    ],
     lists:flatten([
-            {TIOCMBIS, CM17A_SIGNAL_STANDBY, 350},
-            Insn,
-            {TIOCMBIS, CM17A_SIGNAL_STANDBY, 350}
-        ]).
+        {TIOCMBIS, CM17A_SIGNAL_STANDBY, 350},
+        Insn,
+        {TIOCMBIS, CM17A_SIGNAL_STANDBY, 350}
+    ]).
 
 -spec command(iodata(), cm17a_code(), cm17a_device(), cm17a_cmd()) ->
     ok | {error, file:posix()}.
@@ -144,10 +166,11 @@ send(FD, Insn) ->
 init(FD) ->
     case serctl:ioctl(FD, ?TIOCMGET, <<0:32>>) of
         {ok, Status0} ->
-            Status1 = binary:decode_unsigned(
-                Status0,
-                erlang:system_info(endian)
-            ) band (?TIOCM_DTR bor ?TIOCM_RTS),
+            Status1 =
+                binary:decode_unsigned(
+                    Status0,
+                    erlang:system_info(endian)
+                ) band (?TIOCM_DTR bor ?TIOCM_RTS),
             {ok, Status1 bxor (?TIOCM_DTR bor ?TIOCM_RTS)};
         Error ->
             Error
@@ -156,12 +179,13 @@ init(FD) ->
 -spec run(fd(), [cm17a_insn()]) -> 'ok' | {'error', file:posix()}.
 run(_FD, []) ->
     ok;
-run(FD, [{Request, Arg, Delay}|Insn]) ->
+run(FD, [{Request, Arg, Delay} | Insn]) ->
     case serctl:ioctl(FD, Request, <<?UINT32(Arg)>>) of
         {ok, _} ->
             timer:sleep(Delay),
             run(FD, Insn);
-        Error -> Error
+        Error ->
+            Error
     end.
 
 -spec reset(fd(), non_neg_integer()) -> 'ok' | {'error', file:posix()}.
@@ -171,11 +195,14 @@ reset(FD, Status) ->
         Error -> Error
     end.
 
--spec process(FD :: fd(), Insn :: [cm17a_insn()],
+-spec process(
+    FD :: fd(),
+    Insn :: [cm17a_insn()],
     Init :: fun((any()) -> {ok, non_neg_integer()} | {error, file:posix()}),
     Run :: fun((any(), [cm17a_insn()]) -> ok | {error, file:posix()}),
-    Reset :: fun((any(), non_neg_integer()) -> ok | {error, file:posix()}))
-    -> ok.
+    Reset :: fun((any(), non_neg_integer()) -> ok | {error, file:posix()})
+) ->
+    ok.
 process(FD, Insn, Init, Run, Reset) ->
     case Init(FD) of
         {ok, State} ->

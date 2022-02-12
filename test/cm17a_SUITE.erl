@@ -1,3 +1,4 @@
+%%% % @noformat
 -module(cm17a_SUITE).
 
 -include_lib("common_test/include/ct.hrl").

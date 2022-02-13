@@ -109,6 +109,7 @@ cmd(pause) -> 16#20.
 
 -define(DEVICE_LOOKUP(N, X), (element(N, (element(X, ?CM17A_DEVICE))))).
 
+%% @doc Encode the CM17A command
 -spec encode(cm17a_code(), cm17a_device(), cm17a_cmd()) -> cm17a_data().
 encode(Code, Dev, Cmd) ->
     <<16#d5, 16#aa,
@@ -116,6 +117,11 @@ encode(Code, Dev, Cmd) ->
             (?DEVICE_LOOKUP(1, Dev))),
         (cmd(Cmd) bor (?DEVICE_LOOKUP(2, Dev))), 16#ad>>.
 
+%% @doc Generate a representation of the state of the serial port for
+%% each bit in the encoded command
+%%
+%% insn/1 calls into an NIF to retrieve constants for serctl:ioctl/3 so
+%% the result is not portable.
 -spec insn(cm17a_data()) -> [cm17a_insn()].
 insn(Bytes) ->
     TIOCMBIC = ?TIOCMBIC,
@@ -144,6 +150,7 @@ insn(Bytes) ->
         {TIOCMBIS, CM17A_SIGNAL_STANDBY, 350}
     ]).
 
+%% @doc Send a command to the X10 firecracker controller
 -spec command(iodata(), cm17a_code(), cm17a_device(), cm17a_cmd()) ->
     ok | {error, file:posix()}.
 command(Serial, Code, Dev, Cmd) ->
@@ -158,6 +165,17 @@ command(Serial, Code, Dev, Cmd) ->
             Error
     end.
 
+%% @doc Perform actions in the list of instructions on a serial port
+%%
+%% ```
+%% {ok,FD} = serctl:open("/dev/ttyUSB0"),
+%% cm17a:send(FD, cm17a:insn(cm17a:encode($A,1,on))).
+%% '''
+%%
+%% Is equivalent to:
+%% ```
+%% cm17a:command("/dev/ttyUSB0", $A, 1, on).
+%% '''
 -spec send(fd(), [cm17a_insn()]) -> 'ok' | {'error', file:posix()}.
 send(FD, Insn) ->
     process(FD, Insn, fun init/1, fun run/2, fun reset/2).

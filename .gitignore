@@ -3,6 +3,7 @@
 ebin/
 priv/
 deps/
+doc/
 .depsolver_plt
 [._]*.s[a-w][a-z]
 [._]s[a-w][a-z]

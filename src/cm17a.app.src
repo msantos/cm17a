@@ -1,15 +1,17 @@
-{application, cm17a,
-    [
+{application, cm17a, [
     {description, "X10 CMA17a (firecracker) interface"},
-    {vsn, "0.3.0"},
-    {modules, [
-        cma17a,
-        serctl
-            ]},
+    {vsn, "0.3.1"},
+    {modules, []},
     {registered, []},
     {applications, [
         kernel,
-        stdlib
-            ]},
-    {env, []}
-    ]}.
+        stdlib,
+        cma17a,
+        serctl
+    ]},
+    {env, []},
+    {licenses, ["ISC"]},
+    {maintainers, ["Michael Santos"]},
+    {links, [{"Github", "https://github.com/msantos/cm17a"}]},
+    {doc, "doc"}
+]}.

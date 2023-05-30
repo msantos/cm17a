@@ -1,6 +1,6 @@
 {application, cm17a, [
     {description, "X10 CMA17a (firecracker) interface"},
-    {vsn, "0.3.1"},
+    {vsn, "0.3.2"},
     {modules, []},
     {registered, []},
     {applications, [
@@ -11,7 +11,6 @@
     ]},
     {env, []},
     {licenses, ["ISC"]},
-    {maintainers, ["Michael Santos"]},
     {links, [{"Github", "https://github.com/msantos/cm17a"}]},
     {doc, "doc"}
 ]}.

@@ -1,5 +1,8 @@
 # Erlang X10 Firecracker (CM17A) Interface
 
+[![Package Version](https://img.shields.io/hexpm/v/cm17a)](https://hex.pm/packages/cm17a)
+[![Hex Docs](https://img.shields.io/badge/hex-docs)](https://hexdocs.pm/cm17a/)
+
 An Erlang interface to the X10 Firecracker (CM17A) home automation
 RF transmitters.
 
